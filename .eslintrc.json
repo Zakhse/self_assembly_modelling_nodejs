@@ -1,0 +1,6 @@
+{
+  "root": true,
+  "extends": [
+    "@bchteam/eslint-config/js-style/base"
+  ]
+}
