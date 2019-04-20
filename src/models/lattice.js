@@ -112,15 +112,25 @@ class Lattice {
     }
   }
 
-  toTextBackup() {
+  toTextBackup({
+    [Orientation.NONE]: none = ' ',
+    [Orientation.HORIZONTAL]: hor = '|',
+    [Orientation.VERTICAL]: ver = '-',
+  } = {}) {
     let res = ''
+
+    const map = {
+      [Orientation.NONE]: none,
+      [Orientation.HORIZONTAL]: hor,
+      [Orientation.VERTICAL]: ver,
+    }
 
     const lattice = this.lattice
     const size = this.size
     for (let i = 0; i < size; i++) {
       for (let j = 0; j < size; j++) {
         const particle = lattice[i][j]
-        res += (particle ? particle.orientation : Orientation.NONE) + ' '
+        res += (particle ? map[particle.orientation] : map[Orientation.NONE]) + ' '
       }
       res += '\n'
     }
