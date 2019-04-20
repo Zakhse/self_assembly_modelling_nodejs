@@ -8,8 +8,15 @@ function randomInteger(min, max) {
 
 function getRandomFromSet(set) {
   const size = set.size
-  const randIndex = randomInteger(0, size - 1)
-  return Array.from(set)[randIndex]
+  let randIndex = randomInteger(0, size - 1)
+
+  const it = set.values()
+  while (randIndex > 0) {
+    it.next()
+    randIndex--
+  }
+
+  return it.next().value
 }
 
 module.exports = {
