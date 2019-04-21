@@ -23,6 +23,7 @@
     "eslint-plugin-standard": "^4.0.0"
   },
   "dependencies": {
-    "hash-set-map": "^1.0.2"
+    "hash-set-map": "^1.0.2",
+    "lodash": "^4.17.11"
   }
 }

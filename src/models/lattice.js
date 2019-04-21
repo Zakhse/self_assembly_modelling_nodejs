@@ -1,4 +1,5 @@
 const { Set: HashSet } = require('hash-set-map')
+const _ = require('lodash')
 const { randomBoolean, getRandomFromSet } = require('../utils')
 const Orientation = require('./orientation')
 const Particle = require('./particle')
