@@ -2,21 +2,7 @@ const { Set: HashSet } = require('hash-set-map')
 const { randomBoolean, getRandomFromSet } = require('../utils')
 const Orientation = require('./orientation')
 const Particle = require('./particle')
-
-class Point {
-  constructor(x, y) {
-    this.x = x
-    this.y = y
-  }
-
-  static hashcodeOf(point) {
-    return point.hashcode()
-  }
-
-  hashcode() {
-    return `${this.x}|${this.y}`
-  }
-}
+const Point = require('./point')
 
 class Lattice {
   constructor({ size = 256, particleLength = 8 }) {
