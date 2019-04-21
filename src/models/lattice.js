@@ -58,8 +58,7 @@ class Lattice {
         pointsForVerticalParticles.add(new Point(i, j))
     }
 
-    const numberOfPlacedParticles = 0
-
+    let numberOfPlacedParticles = 0
     let chosenPoint
     let chosenOrientation
     let X
@@ -109,6 +108,8 @@ class Lattice {
             pointsForHorizontalParticles.delete(new Point(i, j))
         }
       }
+
+      numberOfPlacedParticles++
     }
   }
 
