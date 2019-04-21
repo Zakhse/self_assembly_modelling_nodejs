@@ -1,4 +1,3 @@
-// const { Set: ImmutableSet } = require('immutable')
 const { Set: HashSet } = require('hash-set-map')
 const { randomBoolean, getRandomFromSet } = require('../utils')
 const Orientation = require('./orientation')
@@ -129,7 +128,43 @@ class Lattice {
     this.particles.push(particle)
   }
 
-  toTextBackup({
+  getBackup() {
+    const particlesWithCoords = Array.from(this.particleCoords.entries())
+      .map(([particle, point]) => ({
+        id: particle.id,
+        o: particle.orientation,
+        x: point.x,
+        y: point.y,
+      }))
+    return {
+      s: this.size,
+      l: this.particleLength,
+      p: particlesWithCoords,
+    }
+  }
+
+  static restoreFromBackup(backup) {
+    const particleLength = backup.l
+    const lattice = new Lattice({
+      size: backup.s,
+      particleLength: particleLength,
+    })
+    lattice._generateLattice()
+    backup.p.forEach(({ id, o, x, y }) => {
+      const point = new Point(x, y)
+      const particle = new Particle({
+        orientation: o,
+        length: particleLength,
+        id,
+      })
+
+      lattice._placeParticle(particle, point)
+    })
+
+    return lattice
+  }
+
+  getVisualization({
     [Orientation.NONE]: none = ' ',
     [Orientation.HORIZONTAL]: hor = '|',
     [Orientation.VERTICAL]: ver = '-',
