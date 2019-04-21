@@ -153,8 +153,8 @@ class Lattice {
 
   getVisualization({
     [Orientation.NONE]: none = ' ',
-    [Orientation.HORIZONTAL]: hor = '|',
-    [Orientation.VERTICAL]: ver = '-',
+    [Orientation.HORIZONTAL]: hor = '-',
+    [Orientation.VERTICAL]: ver = '|',
   } = {}) {
     let res = ''
 
@@ -166,8 +166,8 @@ class Lattice {
 
     const lattice = this.lattice
     const size = this.size
-    for (let i = 0; i < size; i++) {
-      for (let j = 0; j < size; j++) {
+    for (let j = 0; j < size; j++) {
+      for (let i = 0; i < size; i++) {
         const particle = lattice[i][j]
         res += (particle ? map[particle.orientation] : map[Orientation.NONE]) + ' '
       }
