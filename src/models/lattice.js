@@ -23,16 +23,24 @@ class Lattice {
   constructor({ size = 256, particleLength = 8 }) {
     if (size < 10 || size > 512)
       throw new RangeError(`Lattice size must be >=10 and <=512, but ${size} is provided`)
+
     if (!Number.isInteger(size))
       throw new TypeError(`Lattice size must be integer, but ${size} is provided`)
 
     if (particleLength < 2 || particleLength > 128)
       throw new RangeError(`Particle length must be >=2 and <=128, but ${particleLength} is provided`)
+
     if (!Number.isInteger(particleLength))
       throw new TypeError(`Particle length must be integer, but ${particleLength} is provided`)
 
     this.size = size
     this.particleLength = particleLength
+    this._init()
+  }
+
+  _init() {
+    this.particleCoords = new Map() // Key is particle, values are Point of particle's head
+    this.particles = []
     this._generateLattice()
   }
 
@@ -46,7 +54,6 @@ class Lattice {
 
     const size = this.size
     const particleLength = this.particleLength
-    const lattice = this.lattice
 
     for (let i = 0; i <= size - particleLength; i++) {
       for (let j = 0; j < size; j++)
@@ -81,14 +88,7 @@ class Lattice {
         id: numberOfPlacedParticles + 1,
       })
 
-      // Placing particle
-      if (chosenOrientation === Orientation.HORIZONTAL) {
-        for (let i = X; i < X + particleLength; i++)
-          lattice[i][Y] = particleToPlace
-      } else {
-        for (let j = Y; j < Y + particleLength; j++)
-          lattice[X][j] = particleToPlace
-      }
+      this._placeParticle(particleToPlace, chosenPoint)
 
       // Remove points that can't have a head of any particle now
       if (chosenOrientation === Orientation.HORIZONTAL) {
@@ -111,6 +111,22 @@ class Lattice {
 
       numberOfPlacedParticles++
     }
+  }
+
+  _placeParticle(particle, point) {
+    const length = particle.length
+    const X = point.x
+    const Y = point.y
+    if (particle.orientation === Orientation.HORIZONTAL) {
+      for (let i = X; i < X + length; i++)
+        this.lattice[i][Y] = particle
+    } else {
+      for (let j = Y; j < Y + length; j++)
+        this.lattice[X][j] = particle
+    }
+
+    this.particleCoords.set(particle, point)
+    this.particles.push(particle)
   }
 
   toTextBackup({
