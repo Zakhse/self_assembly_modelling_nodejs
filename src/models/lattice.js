@@ -2,8 +2,11 @@ const { Set: HashSet } = require('hash-set-map')
 const _ = require('lodash')
 const { randomBoolean, getRandomFromSet } = require('../utils')
 const Orientation = require('./orientation')
+const Direction = require('./direction')
 const Particle = require('./particle')
 const Point = require('./point')
+
+const possibleDirections = Object.values(Direction)
 
 class Lattice {
   constructor({ size = 256, particleLength = 8 }) {
@@ -113,6 +116,135 @@ class Lattice {
 
     this.particleCoords.set(particle, point)
     this.particles.push(particle)
+  }
+
+  _moveParticleIfPossible(particle) {
+    const directions = _.shuffle(possibleDirections)
+    let index = directions.length
+    let chosenDirection
+    while (index > 0) {
+      chosenDirection = directions[--index]
+      if (this._moveParticleToDirectionIfPossible(particle, chosenDirection))
+        return true
+    }
+
+    return false
+  }
+
+  _area(particle, direction) {
+    const orientation = particle.orientation
+    const particleHeadPoint = this.particleCoords.get(particle)
+
+    let startX
+    let endX
+    let startY
+    let endY
+
+    switch (direction) {
+      case Direction.UP:
+      case Direction.DOWN:
+        startX = particleHeadPoint.x
+        startY = this._fixX(particleHeadPoint.y + (direction === Direction.UP ? -1 : 1))
+        break
+      case Direction.LEFT:
+      case Direction.RIGHT:
+        startX = this._fixX(particleHeadPoint.x + (direction === Direction.LEFT ? -1 : 1))
+        startY = particleHeadPoint.y
+        break
+      default:
+        startX = particleHeadPoint.x
+        startY = particleHeadPoint.y
+    }
+
+    if (orientation === Orientation.HORIZONTAL) {
+      endX = this._fixX(startX + particle.length - 1)
+      endY = startY
+    } else {
+      endX = startX
+      endY = this._fixY(startY + particle.length - 1)
+    }
+
+    return {
+      startX,
+      endX,
+      startY,
+      endY,
+    }
+  }
+
+  _moveParticleToDirectionIfPossible(particle, direction) {
+    const lattice = this.lattice
+
+    const newArea = this._area(particle, direction)
+    let canBeMoved = true
+    let cellVal
+    this._iterateArea(newArea, (x, y) => {
+      cellVal = lattice[x][y]
+      if (cellVal && cellVal !== particle) {
+        canBeMoved = false
+        return true
+      }
+    })
+
+    if (!canBeMoved)
+      return false
+
+    const oldArea = this._area(particle, null)
+    this._iterateArea(oldArea, (x, y) => {
+      lattice[x][y] = null
+    })
+
+    this._iterateArea(newArea, (x, y) => {
+      lattice[x][y] = particle
+    })
+
+    this.particleCoords.set(particle, new Point(newArea.startX, newArea.startY))
+
+    return true
+  }
+
+  _iterateArea(area, callback) {
+    const { startX, startY, endX, endY } = area
+    const exclusiveX = this._fixX(endX + 1)
+    const exclusiveY = this._fixY(endY + 1)
+
+    let curX = startX
+    let curY
+    innerLoop : do { // eslint-disable-line no-labels
+      curY = startY
+      do {
+        if (callback(curX, curY, this))
+          break innerLoop // eslint-disable-line no-labels
+        curY = this._fixY(curY + 1)
+      } while (curY !== exclusiveY)
+      curX = this._fixX(curX + 1)
+    } while (curX !== exclusiveX)
+  }
+
+  _fixX(X) {
+    return (X + this.size) % this.size
+  }
+
+  _fixY(Y) {
+    // noinspection JSSuspiciousNameCombination
+    return this._fixX(Y)
+  }
+
+  fillWithParticles() {
+    this._fillWithParticles()
+  }
+
+  makeDiffusionStep() {
+    const size = this.size
+    const particles = this.particles
+    let i = size
+    const maxIndex = particles.length - 1
+    let randomParticle
+
+    while (i-- > 0) {
+      randomParticle = particles[_.random(0, maxIndex)]
+      this._moveParticleIfPossible(randomParticle)
+    }
   }
 
   getBackup() {
