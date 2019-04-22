@@ -169,7 +169,8 @@ class Lattice {
     for (let j = 0; j < size; j++) {
       for (let i = 0; i < size; i++) {
         const particle = lattice[i][j]
-        res += (particle ? map[particle.orientation] : map[Orientation.NONE]) + ' '
+        const mappedVal = particle ? map[particle.orientation] : map[Orientation.NONE]
+        res += (_.isFunction(mappedVal) ? mappedVal(particle) : mappedVal) + ' '
       }
       res += '\n'
     }
