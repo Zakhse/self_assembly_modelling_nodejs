@@ -284,16 +284,22 @@ class Lattice {
   }
 
   getVisualization({
-    [Orientation.NONE]: none = ' ',
-    [Orientation.HORIZONTAL]: hor = '-',
-    [Orientation.VERTICAL]: ver = '|',
+    [Orientation.NONE]: none,
+    [Orientation.HORIZONTAL]: hor,
+    [Orientation.VERTICAL]: ver,
   } = {}) {
     let res = ''
 
+    const defaultMap = {
+      [Orientation.NONE]: ' ',
+      [Orientation.HORIZONTAL]: '-',
+      [Orientation.VERTICAL]: '|',
+    }
+
     const map = {
-      [Orientation.NONE]: none,
-      [Orientation.HORIZONTAL]: hor,
-      [Orientation.VERTICAL]: ver,
+      [Orientation.NONE]: none === undefined ? defaultMap[Orientation.NONE] : none,
+      [Orientation.HORIZONTAL]: hor === undefined ? defaultMap[Orientation.HORIZONTAL] : hor,
+      [Orientation.VERTICAL]: ver === undefined ? defaultMap[Orientation.VERTICAL] : ver,
     }
 
     const lattice = this.lattice
@@ -301,8 +307,8 @@ class Lattice {
     for (let j = 0; j < size; j++) {
       for (let i = 0; i < size; i++) {
         const particle = lattice[i][j]
-        const mappedVal = particle ? map[particle.orientation] : map[Orientation.NONE]
-        res += (_.isFunction(mappedVal) ? mappedVal(particle) : mappedVal) + ' '
+        const mapKey = particle ? particle.orientation : Orientation.NONE
+        res += (_.isFunction(map[mapKey]) ? map[mapKey](particle, defaultMap[mapKey]) : map[mapKey]) + ' '
       }
       res += '\n'
     }
