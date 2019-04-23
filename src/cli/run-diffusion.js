@@ -1,8 +1,26 @@
+const path = require('path')
+const fs = require('fs')
+const shortid = require('shortid')
 const colors = require('colors/safe')
-const Lattice = require('../models/lattice')
+const readlineSync = require('readline-sync')
+const _ = require('lodash')
+const rimraf = require('rimraf')
+const makeDir = require('make-dir')
 const Orientation = require('../models/orientation')
+const Lattice = require('../models/lattice')
+const utils = require('../utils')
+const CliError = require('./cli-error')
 
-function handle({ latticeSize: size, particleLength, maxSteps, logLatticeEachStep, noColor }) {
+function runDiffusion({
+  latticeSize: size,
+  particleLength,
+  maxSteps,
+  logLatticeEachStep,
+  noColor,
+  saveToDir,
+  saveEachStep,
+  saveWithImage,
+}) {
   console.log(`Start modeling diffusion in lattice with size ${size} and particle length ${particleLength}`)
 
   if (!Number.isSafeInteger(maxSteps) || maxSteps <= 0)
@@ -24,22 +42,106 @@ function handle({ latticeSize: size, particleLength, maxSteps, logLatticeEachSte
       [Orientation.HORIZONTAL]: (p, defaultSymbol) => colors.red(defaultSymbol),
     }
 
+  try {
+    ({
+      saveToDir,
+      saveEachStep,
+    } = handleSaveToDir({
+      saveToDir,
+      saveEachStep,
+      size,
+      particleLength,
+    }))
+  } catch (e) {
+    if (e.message === 'directory_is_not_empty')
+      throw new CliError('Modeling steps cannot be saved in not empty directory')
+    else
+      throw e
+  }
+
+  if (saveToDir)
+    console.log(`Save every ${saveEachStep} step of modeling to ${saveToDir}${saveWithImage ? ' with images' : ''}`)
+  else
+    console.log('Saving steps of modeling is disabled')
+
   const l = new Lattice({
     size,
     particleLength,
   })
   l.fillWithParticles()
 
-  if (logLatticeEachStep > 0) {
-    console.log('Generated lattice:')
-    console.log(l.getVisualization(visualizationArg))
-  }
+  if (logLatticeEachStep > 0)
+    logLattce(l, 0, visualizationArg)
+  if (saveEachStep > 0)
+    saveLattice(l, saveToDir, saveWithImage, 0)
 
   for (let i = 1; i <= maxSteps; i++) {
     l.makeDiffusionStep()
-    if (i % logLatticeEachStep === 0) {
-      console.log(`Lattice after ${i} diffusion steps:`)
-      console.log(l.getVisualization(visualizationArg))
+    if (i % logLatticeEachStep === 0)
+      logLattce(l, i, visualizationArg)
+
+    if (i % saveEachStep === 0)
+      saveLattice(l, saveToDir, saveWithImage, i)
+  }
+}
+
+function logLattce(lattice, i, visualizationArg) {
+  console.log(`Lattice after ${i} diffusion steps:`)
+  console.log(lattice.getVisualization(visualizationArg))
+}
+
+function saveLattice(lattice, saveToDir, saveWithImage, i) {
+  utils.saveLattice(lattice, saveToDir, () => i)
+
+  if (saveWithImage)
+    utils.saveLatticeImg(lattice, saveToDir, () => i)
+}
+
+function handleSaveToDir({ saveToDir, size, particleLength, saveEachStep }) {
+  const saveEachStepIsValid = Number.isSafeInteger(saveEachStep) && saveEachStep > 0
+
+  if (saveEachStepIsValid && saveToDir) {
+    if (saveToDir === true)
+      saveToDir = `lattice_${size}_particle_${particleLength}_${shortid.generate()}`
+    saveToDir = path.resolve(saveToDir)
+
+    if (fs.existsSync(saveToDir)) {
+      if (fs.readdirSync(saveToDir).length > 0) {
+        let answer = ''
+        while (!_.isBoolean(answer)) {
+          answer = readlineSync.question(`Directory ${saveToDir} is not empty. Clear it? [y/n] `, {
+            trueValue: ['yes', 'y', 'Y'],
+            falseValue: ['no', 'n', 'N'],
+          })
+        }
+
+        if (answer)
+          rimraf.sync(`${saveToDir}/*`)
+        else
+          throw new Error('directory_is_not_empty')
+      }
+    } else {
+      makeDir.sync(saveToDir)
+    }
+  } else {
+    saveToDir = false
+  }
+
+  return {
+    saveToDir,
+    saveEachStep: saveToDir === false ? 0 : saveEachStep,
+  }
+}
+
+function handle(args) {
+  try {
+    runDiffusion(args)
+  } catch (e) {
+    if (e instanceof CliError) {
+      console.log(e.message)
+      console.log('Exiting...')
+    } else {
+      throw e
     }
   }
 }

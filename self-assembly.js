@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const path = require('path')
 const yargs = require('yargs')
 
 const runDiffusion = require('./src/cli/run-diffusion')
@@ -36,6 +37,23 @@ const yargsConf = yargs.scriptName('self-assembly')
         describe: 'Disable coloring horizontal and vertical particles in log',
         type: 'boolean',
       })
+      .option('save-to-dir', {
+        alias: ['d'],
+        describe: 'Path to directory for saving steps of modeling (directory name can be generated or passed explicitly)',
+        coerce: saveToDir => saveToDir || true,
+        type: 'string',
+      })
+      .option('save-each-step', {
+        describe: 'Save each <n> step of modeling to directory',
+        default: 1000,
+        type: 'number',
+      })
+      .option('save-with-img', {
+        alias: ['i'],
+        describe: 'Save image together with step of diffusion',
+        default: false,
+        type: 'boolean',
+      })
   }, function (argv) {
     const {
       latticeSize,
@@ -43,14 +61,19 @@ const yargsConf = yargs.scriptName('self-assembly')
       steps,
       logLatticeEach,
       noColor,
+      saveToDir = false,
+      saveEachStep,
+      saveWithImg,
     } = argv
-    console.log(argv)
     runDiffusion({
       latticeSize,
       particleLength,
       logLatticeEachStep: logLatticeEach,
       maxSteps: steps,
       noColor,
+      saveToDir,
+      saveEachStep,
+      saveWithImage: saveWithImg,
     })
   })
   .alias('h', 'help')

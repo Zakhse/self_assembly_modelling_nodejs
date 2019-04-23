@@ -1,3 +1,4 @@
 node_modules
 .idea
 grid_samples
+lattice_*
