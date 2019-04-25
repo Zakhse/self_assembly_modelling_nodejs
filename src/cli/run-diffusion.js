@@ -20,6 +20,7 @@ function runDiffusion({
   saveToDir,
   saveEachStep,
   saveWithImage,
+  selfAssemblyCheck,
 }) {
   console.log(`Start modeling diffusion in lattice with size ${size} and particle length ${particleLength}`)
 
@@ -33,6 +34,11 @@ function runDiffusion({
     console.log(`Log the lattice each ${logLatticeEachStep} step`)
   else
     console.log('Logging the lattice is disabled')
+
+  if (selfAssemblyCheck)
+    console.log('Checking self-assembly state is enabled')
+  else
+    console.log('Checking self-assembly state is disabled')
 
   console.log(`Coloring particles is ${noColor ? 'disabled' : 'enabled'}`)
   const visualizationArg = noColor
@@ -71,30 +77,48 @@ function runDiffusion({
   l.fillWithParticles()
 
   if (logLatticeEachStep > 0)
-    logLattce(l, 0, visualizationArg)
+    logLattice(l, 0, visualizationArg)
   if (saveEachStep > 0)
     saveLattice(l, saveToDir, saveWithImage, 0)
 
+  let selfAssemblyState
   for (let i = 1; i <= maxSteps; i++) {
     l.makeDiffusionStep()
+
+    if ((i % logLatticeEachStep === 0 || i % saveEachStep === 0) && selfAssemblyCheck)
+      selfAssemblyState = l.checkForSelfAssembly()
+
     if (i % logLatticeEachStep === 0)
-      logLattce(l, i, visualizationArg)
+      logLattice(l, i, visualizationArg, selfAssemblyState)
 
     if (i % saveEachStep === 0)
-      saveLattice(l, saveToDir, saveWithImage, i)
+      saveLattice(l, saveToDir, saveWithImage, i, selfAssemblyState)
   }
 }
 
-function logLattce(lattice, i, visualizationArg) {
-  console.log(`Lattice after ${i} diffusion steps:`)
+function logLattice(lattice, i, visualizationArg, selfAssemblyState) {
+  const selfAssemblyMsg = _.isBoolean(selfAssemblyState)
+    ? (selfAssemblyState
+      ? ' IS self-assembled'
+      : ' is NOT self-assembled')
+    : ''
+  console.log(`Lattice after ${i} diffusion steps${selfAssemblyMsg}:`)
   console.log(lattice.getVisualization(visualizationArg))
 }
 
-function saveLattice(lattice, saveToDir, saveWithImage, i) {
-  utils.saveLattice(lattice, saveToDir, () => i)
+function saveLattice(lattice, saveToDir, saveWithImage, i, selfAssemblyState) {
+  let filename = i
+  if (_.isBoolean(selfAssemblyState)) {
+    if (selfAssemblyState)
+      filename += '_with_self_assembly'
+    else
+      filename += '_without_self_assembly'
+  }
+
+  utils.saveLattice(lattice, saveToDir, filename)
 
   if (saveWithImage)
-    utils.saveLatticeImg(lattice, saveToDir, () => i)
+    utils.saveLatticeImg(lattice, saveToDir, filename)
 }
 
 function handleSaveToDir({ saveToDir, size, particleLength, saveEachStep }) {

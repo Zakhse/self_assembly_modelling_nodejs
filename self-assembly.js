@@ -54,6 +54,12 @@ const yargsConf = yargs.scriptName('self-assembly')
         default: false,
         type: 'boolean',
       })
+      .option('self-assembly-check', {
+        alias: ['A'],
+        describe: 'Check if particles in lattice are self-assembled or not',
+        default: false,
+        type: 'boolean',
+      })
   }, function (argv) {
     const {
       latticeSize,
@@ -64,6 +70,7 @@ const yargsConf = yargs.scriptName('self-assembly')
       saveToDir = false,
       saveEachStep,
       saveWithImg,
+      selfAssemblyCheck,
     } = argv
     runDiffusion({
       latticeSize,
@@ -74,6 +81,7 @@ const yargsConf = yargs.scriptName('self-assembly')
       saveToDir,
       saveEachStep,
       saveWithImage: saveWithImg,
+      selfAssemblyCheck,
     })
   })
   .alias('h', 'help')

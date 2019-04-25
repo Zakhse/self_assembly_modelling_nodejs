@@ -1,6 +1,7 @@
 const { Set: HashSet } = require('hash-set-map')
 const _ = require('lodash')
 const { randomBoolean, getRandomFromSet } = require('../utils')
+const checkForSelfAssembly = require('../self_assembly_checking')
 const Orientation = require('./orientation')
 const Direction = require('./direction')
 const Particle = require('./particle')
@@ -103,19 +104,12 @@ class Lattice {
   }
 
   _placeParticle(particle, point) {
-    const length = particle.length
-    const X = point.x
-    const Y = point.y
-    if (particle.orientation === Orientation.HORIZONTAL) {
-      for (let i = X; i < X + length; i++)
-        this.lattice[i][Y] = particle
-    } else {
-      for (let j = Y; j < Y + length; j++)
-        this.lattice[X][j] = particle
-    }
-
     this.particleCoords.set(particle, point)
     this.particles.push(particle)
+
+    this._iterateArea(this._area(particle), (x, y) => {
+      this.lattice[x][y] = particle
+    })
   }
 
   _moveParticleIfPossible(particle) {
@@ -245,6 +239,10 @@ class Lattice {
       randomParticle = particles[_.random(0, maxIndex)]
       this._moveParticleIfPossible(randomParticle)
     }
+  }
+
+  checkForSelfAssembly(strategy) {
+    return checkForSelfAssembly(this, strategy)
   }
 
   getBackup() {
