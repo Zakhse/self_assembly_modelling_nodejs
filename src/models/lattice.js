@@ -229,9 +229,8 @@ class Lattice {
   }
 
   makeDiffusionStep() {
-    const size = this.size
     const particles = this.particles
-    let i = size
+    let i = particles.length
     const maxIndex = particles.length - 1
     let randomParticle
 
