@@ -21,6 +21,7 @@ function runDiffusion({
   saveEachStep,
   saveWithImage,
   selfAssemblyCheck,
+  selfAssemblyCheckStrategyName = null,
 }) {
   console.log(`Start modeling diffusion in lattice with size ${size} and particle length ${particleLength}`)
 
@@ -31,16 +32,22 @@ function runDiffusion({
   if (!Number.isSafeInteger(logLatticeEachStep) || logLatticeEachStep < 0)
     logLatticeEachStep = 0
   if (logLatticeEachStep)
-    console.log(`Log the lattice each ${logLatticeEachStep} step`)
+    console.log(`Log the lattice each ${logLatticeEachStep} step ${noColor ? 'without' : 'with'} coloring the particles`)
   else
     console.log('Logging the lattice is disabled')
 
-  if (selfAssemblyCheck)
-    console.log('Checking self-assembly state is enabled')
-  else
-    console.log('Checking self-assembly state is disabled')
+  let selfAssemblyCheckStrategy = null
+  if (selfAssemblyCheck && selfAssemblyCheckStrategyName) {
+    if (selfAssemblyCheckStrategyName === 'clusters')
+      selfAssemblyCheckStrategy = require('../self_assembly_checking/clusters-strategy')
+    else
+      selfAssemblyCheckStrategy = require('../self_assembly_checking/clusters-strategy')
 
-  console.log(`Coloring particles is ${noColor ? 'disabled' : 'enabled'}`)
+    console.log(`Checking self-assembly state is enabled with ${selfAssemblyCheckStrategyName} strategy`)
+  } else {
+    console.log('Checking self-assembly state is disabled')
+  }
+
   const visualizationArg = noColor
     ? undefined
     : {
@@ -78,46 +85,71 @@ function runDiffusion({
 
   if (logLatticeEachStep > 0)
     logLattice(l, 0, visualizationArg)
-  if (saveEachStep > 0)
-    saveLattice(l, saveToDir, saveWithImage, 0)
+  if (saveEachStep > 0) {
+    saveLattice({
+      lattice: l,
+      saveToDir,
+      withImage: saveWithImage,
+    })
+  }
 
   let selfAssemblyState
   for (let i = 1; i <= maxSteps; i++) {
     l.makeDiffusionStep()
 
     if ((i % logLatticeEachStep === 0 || i % saveEachStep === 0) && selfAssemblyCheck)
-      selfAssemblyState = l.checkForSelfAssembly()
+      selfAssemblyState = l.checkForSelfAssembly(selfAssemblyCheckStrategy)
 
     if (i % logLatticeEachStep === 0)
       logLattice(l, i, visualizationArg, selfAssemblyState)
 
-    if (i % saveEachStep === 0)
-      saveLattice(l, saveToDir, saveWithImage, i, selfAssemblyState)
+    if (i % saveEachStep === 0) {
+      saveLattice({
+        lattice: l,
+        saveToDir,
+        withImage: saveWithImage,
+        selfAssemblyState,
+        selfAssemblyCheckStrategyName,
+      })
+    }
   }
 }
 
-function logLattice(lattice, i, visualizationArg, selfAssemblyState) {
+function logLattice({
+  lattice,
+  visualizationArg,
+  selfAssemblyState,
+  selfAssemblyCheckStrategyName,
+}) {
   const selfAssemblyMsg = _.isBoolean(selfAssemblyState)
     ? (selfAssemblyState
       ? ' IS self-assembled'
-      : ' is NOT self-assembled')
+      : ' is NOT self-assembled') + ` (${selfAssemblyCheckStrategyName})`
     : ''
-  console.log(`Lattice after ${i} diffusion steps${selfAssemblyMsg}:`)
+  console.log(`Lattice after ${lattice.getDiffusionSteps()} diffusion steps${selfAssemblyMsg}:`)
   console.log(lattice.getVisualization(visualizationArg))
 }
 
-function saveLattice(lattice, saveToDir, saveWithImage, i, selfAssemblyState) {
-  let filename = i
+function saveLattice({
+  lattice,
+  saveToDir,
+  withImage = false,
+  selfAssemblyState = null,
+  selfAssemblyCheckStrategyName,
+}) {
+  let filename = lattice.getDiffusionSteps()
   if (_.isBoolean(selfAssemblyState)) {
     if (selfAssemblyState)
       filename += '_with_self_assembly'
     else
       filename += '_without_self_assembly'
+
+    filename += `_(${selfAssemblyCheckStrategyName})`
   }
 
   utils.saveLattice(lattice, saveToDir, filename)
 
-  if (saveWithImage)
+  if (withImage)
     utils.saveLatticeImg(lattice, saveToDir, filename)
 }
 

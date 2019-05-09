@@ -1,7 +1,4 @@
-// const NeighbourStrategy = require('./neighbour-strategy')
-const ClustersStrategy = require('./clusters-strategy')
-
-function checkSelfAssembly(lattice, strategy = ClustersStrategy) {
+function checkSelfAssembly(lattice, strategy) {
   return strategy.check(lattice)
 }
 

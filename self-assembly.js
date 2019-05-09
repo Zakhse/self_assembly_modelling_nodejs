@@ -60,6 +60,14 @@ const yargsConf = yargs.scriptName('self-assembly')
         default: false,
         type: 'boolean',
       })
+      .option('self-assembly-check-strategy', {
+        alias: ['C'],
+        describe: 'Strategy for checking self-assembly state',
+        choices: ['clusters'],
+        default: 'clusters',
+        implies: 'self-assembly-check',
+        type: 'string',
+      })
   }, function (argv) {
     const {
       latticeSize,
@@ -71,6 +79,7 @@ const yargsConf = yargs.scriptName('self-assembly')
       saveEachStep,
       saveWithImg,
       selfAssemblyCheck,
+      selfAssemblyCheckStrategy,
     } = argv
     runDiffusion({
       latticeSize,
@@ -82,6 +91,7 @@ const yargsConf = yargs.scriptName('self-assembly')
       saveEachStep,
       saveWithImage: saveWithImg,
       selfAssemblyCheck,
+      selfAssemblyCheckStrategyName: selfAssemblyCheckStrategy,
     })
   })
   .alias('h', 'help')
