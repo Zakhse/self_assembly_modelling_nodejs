@@ -23,6 +23,7 @@ class Lattice {
     if (!Number.isInteger(particleLength))
       throw new TypeError(`Particle length must be integer, but ${particleLength} is provided`)
 
+    this._diffusionSteps = 0
     this.size = size
     this.particleLength = particleLength
     this._init()
@@ -238,10 +239,16 @@ class Lattice {
       randomParticle = particles[_.random(0, maxIndex)]
       this._moveParticleIfPossible(randomParticle)
     }
+
+    this._diffusionSteps++
   }
 
   checkForSelfAssembly(strategy) {
     return checkForSelfAssembly(this, strategy)
+  }
+
+  getDiffusionSteps() {
+    return this._diffusionSteps
   }
 
   getBackup() {
@@ -255,6 +262,7 @@ class Lattice {
     return {
       s: this.size,
       l: this.particleLength,
+      ds: this._diffusionSteps,
       p: particlesWithCoords,
     }
   }
@@ -265,6 +273,7 @@ class Lattice {
       size: backup.s,
       particleLength: particleLength,
     })
+    lattice._diffusionSteps = backup.ds
     lattice._generateLattice()
     backup.p.forEach(({ id, o, x, y }) => {
       const point = new Point(x, y)
