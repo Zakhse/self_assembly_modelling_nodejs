@@ -126,9 +126,10 @@ class Lattice {
     return false
   }
 
-  _area(particle, direction) {
+  _area(particle, direction = null, particleHeadPoint = null) {
     const orientation = particle.orientation
-    const particleHeadPoint = this.particleCoords.get(particle)
+    if (!particleHeadPoint)
+      particleHeadPoint = this.particleCoords.get(particle)
 
     let startX
     let endX
