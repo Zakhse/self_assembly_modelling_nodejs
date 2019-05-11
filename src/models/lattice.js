@@ -1,6 +1,5 @@
-const { Set: HashSet } = require('hash-set-map')
 const _ = require('lodash')
-const { randomBoolean, getRandomFromSet } = require('../utils')
+const { randomBoolean, randomInteger } = require('../utils')
 const checkForSelfAssembly = require('../self_assembly_checking')
 const Orientation = require('./orientation')
 const Direction = require('./direction')
@@ -40,39 +39,45 @@ class Lattice {
   }
 
   _fillWithParticles() {
-    const pointsForHorizontalParticles = new HashSet([], Point.hashcodeOf)
-    const pointsForVerticalParticles = new HashSet([], Point.hashcodeOf)
-
     const size = this.size
     const particleLength = this.particleLength
-
-    for (let i = 0; i <= size - particleLength; i++) {
-      for (let j = 0; j < size; j++)
-        pointsForHorizontalParticles.add(new Point(i, j))
-    }
+    const checkedPointsForVertical = Array(size)
+    const checkedPointsForHorizontal = Array(size)
+    let needCheckPoints = (size ** 2) * 2
 
     for (let i = 0; i < size; i++) {
-      for (let j = 0; j <= size - particleLength; j++)
-        pointsForVerticalParticles.add(new Point(i, j))
+      checkedPointsForVertical[i] = Array(size)
+      checkedPointsForHorizontal[i] = Array(size)
     }
 
     let numberOfPlacedParticles = 0
     let chosenPoint
     let chosenOrientation
-    let X
-    let Y
     let particleToPlace
-    while (!(pointsForHorizontalParticles.size === 0 && pointsForVerticalParticles.size === 0)) {
-      if (pointsForHorizontalParticles.size === 0 || (pointsForVerticalParticles.size !== 0 && randomBoolean())) {
+    let nativeCheckArr
+    while (needCheckPoints > 0) {
+      if (randomBoolean()) {
         chosenOrientation = Orientation.VERTICAL
-        chosenPoint = getRandomFromSet(pointsForVerticalParticles)
+        nativeCheckArr = checkedPointsForVertical
       } else {
         chosenOrientation = Orientation.HORIZONTAL
-        chosenPoint = getRandomFromSet(pointsForHorizontalParticles)
+        nativeCheckArr = checkedPointsForHorizontal
       }
 
-      X = chosenPoint.x
-      Y = chosenPoint.y
+      chosenPoint = new Point(
+        randomInteger(0, size - 1),
+        randomInteger(0, size - 1),
+      )
+
+      if (nativeCheckArr[chosenPoint.x][chosenPoint.y])
+        continue
+
+      nativeCheckArr[chosenPoint.x][chosenPoint.y] = true
+      needCheckPoints--
+
+      if (!this._isFree(chosenOrientation, chosenPoint))
+        continue
+
       particleToPlace = new Particle({
         orientation: chosenOrientation,
         length: particleLength,
@@ -80,25 +85,6 @@ class Lattice {
       })
 
       this._placeParticle(particleToPlace, chosenPoint)
-
-      // Remove points that can't have a head of any particle now
-      if (chosenOrientation === Orientation.HORIZONTAL) {
-        for (let i = Math.max(0, X - particleLength + 1); i <= X + particleLength - 1; i++)
-          pointsForHorizontalParticles.delete(new Point(i, Y))
-
-        for (let i = X; i <= X + particleLength - 1; i++) {
-          for (let j = Math.max(0, Y - particleLength + 1); j <= Y; j++)
-            pointsForVerticalParticles.delete(new Point(i, j))
-        }
-      } else {
-        for (let i = Math.max(0, Y - particleLength + 1); i <= Y + particleLength - 1; i++)
-          pointsForVerticalParticles.delete(new Point(X, i))
-
-        for (let j = Y; j < Y + particleLength; j++) {
-          for (let i = Math.max(0, X - particleLength + 1); i <= X; i++)
-            pointsForHorizontalParticles.delete(new Point(i, j))
-        }
-      }
 
       numberOfPlacedParticles++
     }
