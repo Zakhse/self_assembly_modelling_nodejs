@@ -251,6 +251,10 @@ class Lattice {
     return this._diffusionSteps
   }
 
+  getDensity() {
+    return (this.particles.length * this.particleLength) / (this.size ** 2)
+  }
+
   getBackup() {
     const particlesWithCoords = Array.from(this.particleCoords.entries())
       .map(([particle, point]) => ({
