@@ -10,7 +10,7 @@ const Point = require('./point')
 const possibleDirections = Object.values(Direction)
 
 class Lattice {
-  constructor({ size = 256, particleLength = 8 }) {
+  constructor({ size = 256, particleLength = 8 } = {}) {
     if (size < 10 || size > 512)
       throw new RangeError(`Lattice size must be >=10 and <=512, but ${size} is provided`)
 
