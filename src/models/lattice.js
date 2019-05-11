@@ -126,6 +126,27 @@ class Lattice {
     return false
   }
 
+  _isFree(orientation, point) {
+    let free = true
+    const tempParticle = new Particle({
+      orientation,
+      length: this.particleLength,
+      id: null,
+    })
+
+    let cellVal
+    const area = this._area(tempParticle, null, point)
+    this._iterateArea(area, (x, y) => {
+      cellVal = this.lattice[x][y]
+      if (cellVal) {
+        free = false
+        return true
+      }
+    })
+
+    return free
+  }
+
   _area(particle, direction = null, particleHeadPoint = null) {
     const orientation = particle.orientation
     if (!particleHeadPoint)
