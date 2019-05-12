@@ -86,35 +86,32 @@ function runDiffusion({
   else
     console.log('Saving steps of modeling is disabled')
 
-  if (logLatticeEachStep > 0)
-    logLattice(l, 0, visualizationArg)
-  if (saveEachStep > 0) {
-    saveLattice({
-      lattice: l,
-      saveToDir,
-      withImage: saveWithImage,
-    })
-  }
+  logAndSave({
+    lattice: l,
+    visualizationArg,
+    saveToDir,
+    saveEachStep,
+    withImage: saveWithImage,
+    selfAssemblyCheckStrategy,
+    selfAssemblyCheckStrategyName,
+    logLatticeEachStep,
+    i: 0,
+  })
 
-  let selfAssemblyState
   for (let i = 1; i <= maxSteps; i++) {
     l.makeDiffusionStep()
 
-    if ((i % logLatticeEachStep === 0 || i % saveEachStep === 0) && selfAssemblyCheck)
-      selfAssemblyState = l.checkForSelfAssembly(selfAssemblyCheckStrategy)
-
-    if (i % logLatticeEachStep === 0)
-      logLattice(l, i, visualizationArg, selfAssemblyState)
-
-    if (i % saveEachStep === 0) {
-      saveLattice({
-        lattice: l,
-        saveToDir,
-        withImage: saveWithImage,
-        selfAssemblyState,
-        selfAssemblyCheckStrategyName,
-      })
-    }
+    logAndSave({
+      lattice: l,
+      visualizationArg,
+      saveToDir,
+      saveEachStep,
+      withImage: saveWithImage,
+      selfAssemblyCheckStrategy,
+      selfAssemblyCheckStrategyName,
+      logLatticeEachStep,
+      i,
+    })
   }
 }
 
@@ -125,9 +122,9 @@ function logLattice({
   selfAssemblyCheckStrategyName,
 }) {
   const selfAssemblyMsg = _.isBoolean(selfAssemblyState)
-    ? (selfAssemblyState
-      ? ' IS self-assembled'
-      : ' is NOT self-assembled') + ` (${selfAssemblyCheckStrategyName})`
+    ? ` ${selfAssemblyState
+      ? 'IS'
+      : 'is NOT'} self-assembled (${selfAssemblyCheckStrategyName})`
     : ''
   console.log(`Lattice after ${lattice.getDiffusionSteps()} diffusion steps${selfAssemblyMsg}:`)
   console.log(lattice.getVisualization(visualizationArg))
@@ -154,6 +151,44 @@ function saveLattice({
 
   if (withImage)
     utils.saveLatticeImg(lattice, saveToDir, filename)
+}
+
+function logAndSave({
+  lattice,
+  visualizationArg,
+  saveToDir,
+  saveEachStep,
+  withImage,
+  selfAssemblyCheckStrategy,
+  selfAssemblyCheckStrategyName,
+  logLatticeEachStep,
+  i,
+}) {
+  const needLog = logLatticeEachStep > 0 && (i % logLatticeEachStep === 0)
+  const needSave = saveEachStep > 0 && (i % saveEachStep === 0)
+
+  let selfAssemblyState
+  if (selfAssemblyCheckStrategy && (needLog || needSave))
+    selfAssemblyState = lattice.checkForSelfAssembly(selfAssemblyCheckStrategy)
+
+  if (needLog) {
+    logLattice({
+      lattice,
+      visualizationArg,
+      selfAssemblyState,
+      selfAssemblyCheckStrategyName,
+    })
+  }
+
+  if (needSave) {
+    saveLattice({
+      lattice,
+      saveToDir,
+      withImage,
+      selfAssemblyState,
+      selfAssemblyCheckStrategyName,
+    })
+  }
 }
 
 function handleLattice({ size, particleLength, restoreFrom = null }) {
