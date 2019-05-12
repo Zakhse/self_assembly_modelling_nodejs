@@ -72,6 +72,12 @@ const yargsConf = yargs.scriptName('self-assembly')
         default: 'clusters',
         type: 'string',
       })
+      .option('self-assembly-find', {
+        alias: ['F'],
+        describe: 'Find first diffusion step with self-assembly and stop modelling',
+        default: false,
+        type: 'boolean',
+      })
   }, function (argv) {
     const {
       latticeSize,
@@ -85,6 +91,7 @@ const yargsConf = yargs.scriptName('self-assembly')
       saveWithImg,
       selfAssemblyCheck,
       selfAssemblyCheckStrategy,
+      selfAssemblyFind,
     } = argv
     runDiffusion({
       latticeSize,
@@ -98,6 +105,7 @@ const yargsConf = yargs.scriptName('self-assembly')
       saveWithImage: saveWithImg,
       selfAssemblyCheck,
       selfAssemblyCheckStrategyName: selfAssemblyCheckStrategy,
+      selfAssemblyFind,
     })
   })
   .alias('h', 'help')

@@ -22,6 +22,7 @@ function runDiffusion({
   saveWithImage,
   selfAssemblyCheck,
   selfAssemblyCheckStrategyName = null,
+  selfAssemblyFind,
   restoreFrom,
 }) {
   const l = handleLattice({
@@ -33,6 +34,9 @@ function runDiffusion({
   if (!Number.isSafeInteger(maxSteps) || maxSteps <= 0)
     maxSteps = Infinity
   console.log(`Max steps are ${maxSteps === Infinity ? 'unlimited' : maxSteps}`)
+
+  if (selfAssemblyFind)
+    console.log('Modelling will be stopped after 1st step with self-assembly detected')
 
   if (!Number.isSafeInteger(logLatticeEachStep) || logLatticeEachStep < 0)
     logLatticeEachStep = 0
@@ -92,6 +96,14 @@ function runDiffusion({
   else
     console.log('Saving steps of modeling is disabled')
 
+  let i = 0
+  const maxStepsPlusOne = maxSteps + 1
+  const stopCallback = (reason) => {
+    if (reason === 'self_assembly_found')
+      console.log('Self-assembly is found, stop modelling.')
+    i = maxStepsPlusOne
+  }
+
   logAndSave({
     lattice: l,
     visualizationArg,
@@ -100,11 +112,13 @@ function runDiffusion({
     withImage: saveWithImage,
     selfAssemblyCheckStrategy,
     selfAssemblyCheckStrategyName,
+    selfAssemblyFind,
     logLatticeEachStep,
-    i: 0,
+    i,
+    stopCallback,
   })
 
-  for (let i = 1; i <= maxSteps; i++) {
+  for (i = 1; i < maxStepsPlusOne; i++) {
     l.makeDiffusionStep()
 
     logAndSave({
@@ -115,8 +129,10 @@ function runDiffusion({
       withImage: saveWithImage,
       selfAssemblyCheckStrategy,
       selfAssemblyCheckStrategyName,
+      selfAssemblyFind,
       logLatticeEachStep,
       i,
+      stopCallback,
     })
   }
 }
@@ -167,15 +183,25 @@ function logAndSave({
   withImage,
   selfAssemblyCheckStrategy,
   selfAssemblyCheckStrategyName,
+  selfAssemblyFind = false,
   logLatticeEachStep,
-  i,
+  i = 0,
+  stopCallback,
 }) {
-  const needLog = logLatticeEachStep > 0 && (i % logLatticeEachStep === 0)
-  const needSave = saveEachStep > 0 && (i % saveEachStep === 0)
+  const logIsEnabled = logLatticeEachStep > 0
+  const saveIsEnabled = saveEachStep > 0
+
+  let needLog = logIsEnabled && ((i % logLatticeEachStep === 0))
+  let needSave = saveIsEnabled && ((i % saveEachStep === 0))
 
   let selfAssemblyState
-  if (selfAssemblyCheckStrategy && (needLog || needSave))
+  if (selfAssemblyCheckStrategy && (needLog || needSave || selfAssemblyFind))
     selfAssemblyState = lattice.checkForSelfAssembly(selfAssemblyCheckStrategy)
+
+  if (selfAssemblyFind && selfAssemblyState) {
+    needSave = saveIsEnabled
+    needLog = logIsEnabled
+  }
 
   if (needLog) {
     logLattice({
@@ -195,6 +221,9 @@ function logAndSave({
       selfAssemblyCheckStrategyName,
     })
   }
+
+  if (selfAssemblyState && selfAssemblyFind)
+    stopCallback('self_assembly_found')
 }
 
 function handleLattice({ size, particleLength, restoreFrom = null }) {
