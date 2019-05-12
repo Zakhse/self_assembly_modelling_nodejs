@@ -38,10 +38,14 @@ function runDiffusion({
 
   let selfAssemblyCheckStrategy = null
   if (selfAssemblyCheck && selfAssemblyCheckStrategyName) {
-    if (selfAssemblyCheckStrategyName === 'clusters')
-      selfAssemblyCheckStrategy = require('../self_assembly_checking/clusters-strategy')
-    else
-      selfAssemblyCheckStrategy = require('../self_assembly_checking/clusters-strategy')
+    switch (selfAssemblyCheckStrategyName) {
+      case 'clusters-90':
+        selfAssemblyCheckStrategy = require('../self_assembly_checking/clusters-90-strategy')
+        break
+      case 'clusters':
+      default:
+        selfAssemblyCheckStrategy = require('../self_assembly_checking/clusters-strategy')
+    }
 
     console.log(`Checking self-assembly state is enabled with ${selfAssemblyCheckStrategyName} strategy`)
   } else {

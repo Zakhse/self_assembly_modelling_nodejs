@@ -63,9 +63,8 @@ const yargsConf = yargs.scriptName('self-assembly')
       .option('self-assembly-check-strategy', {
         alias: ['C'],
         describe: 'Strategy for checking self-assembly state',
-        choices: ['clusters'],
+        choices: ['clusters', 'clusters-90'],
         default: 'clusters',
-        implies: 'self-assembly-check',
         type: 'string',
       })
   }, function (argv) {
