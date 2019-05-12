@@ -43,6 +43,11 @@ const yargsConf = yargs.scriptName('self-assembly')
         coerce: saveToDir => saveToDir || true,
         type: 'string',
       })
+      .option('restore-from', {
+        alias: ['f'],
+        describe: 'Path to file with backup of lattice state to use it instead of generating new lattice',
+        type: 'string',
+      })
       .option('save-each-step', {
         describe: 'Save each <n> step of modeling to directory',
         default: 1000,
@@ -75,6 +80,7 @@ const yargsConf = yargs.scriptName('self-assembly')
       logLatticeEach,
       noColor,
       saveToDir = false,
+      restoreFrom,
       saveEachStep,
       saveWithImg,
       selfAssemblyCheck,
@@ -87,6 +93,7 @@ const yargsConf = yargs.scriptName('self-assembly')
       maxSteps: steps,
       noColor,
       saveToDir,
+      restoreFrom,
       saveEachStep,
       saveWithImage: saveWithImg,
       selfAssemblyCheck,

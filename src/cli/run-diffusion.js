@@ -22,8 +22,13 @@ function runDiffusion({
   saveWithImage,
   selfAssemblyCheck,
   selfAssemblyCheckStrategyName = null,
+  restoreFrom,
 }) {
-  console.log(`Start modeling diffusion in lattice with size ${size} and particle length ${particleLength}`)
+  const l = handleLattice({
+    size,
+    particleLength,
+    restoreFrom,
+  })
 
   if (!Number.isSafeInteger(maxSteps) || maxSteps <= 0)
     maxSteps = Infinity
@@ -80,12 +85,6 @@ function runDiffusion({
     console.log(`Save every ${saveEachStep} step of modeling to ${saveToDir}${saveWithImage ? ' with images' : ''}`)
   else
     console.log('Saving steps of modeling is disabled')
-
-  const l = new Lattice({
-    size,
-    particleLength,
-  })
-  l.fillWithParticles()
 
   if (logLatticeEachStep > 0)
     logLattice(l, 0, visualizationArg)
@@ -155,6 +154,35 @@ function saveLattice({
 
   if (withImage)
     utils.saveLatticeImg(lattice, saveToDir, filename)
+}
+
+function handleLattice({ size, particleLength, restoreFrom = null }) {
+  let l
+  if (restoreFrom) {
+    const restoreFromPath = path.resolve(restoreFrom)
+    try {
+      const latticeFromBackup = require(restoreFromPath)
+
+      l = Lattice.restoreFromBackup(latticeFromBackup)
+      size = l.size
+      particleLength = l.particleLength
+    } catch (e) {
+      console.log(`Cannot restore lattice from ${restoreFromPath}`)
+      throw e
+    }
+  }
+
+  console.log(`${l ? 'Continue' : 'Start'} modeling diffusion in lattice with size ${size} and particle length ${particleLength}`)
+
+  if (!l) {
+    l = new Lattice({
+      size,
+      particleLength,
+    })
+    l.fillWithParticles()
+  }
+
+  return l
 }
 
 function handleSaveToDir({ saveToDir, size, particleLength, saveEachStep }) {
