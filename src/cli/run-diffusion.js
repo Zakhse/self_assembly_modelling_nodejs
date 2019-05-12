@@ -47,6 +47,12 @@ function runDiffusion({
       case 'clusters-90':
         selfAssemblyCheckStrategy = require('../self_assembly_checking/clusters-90-strategy')
         break
+      case 'clusters-95':
+        selfAssemblyCheckStrategy = require('../self_assembly_checking/clusters-95-strategy')
+        break
+      case 'clusters-99':
+        selfAssemblyCheckStrategy = require('../self_assembly_checking/clusters-99-strategy')
+        break
       case 'clusters':
       default:
         selfAssemblyCheckStrategy = require('../self_assembly_checking/clusters-strategy')
