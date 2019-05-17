@@ -31,6 +31,9 @@ function runDiffusion({
     restoreFrom,
   })
 
+  particleLength = l.particleLength
+  size = l.size
+
   if (!Number.isSafeInteger(maxSteps) || maxSteps <= 0)
     maxSteps = Infinity
   console.log(`Max steps are ${maxSteps === Infinity ? 'unlimited' : maxSteps}`)
