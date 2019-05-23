@@ -4,7 +4,7 @@ const t = Date.now()
 
 global.prevTime = t
 
-for (let i = 0; i < 2; i++) {
+for (let i = 0; i < 40; i++) {
   const l = new Lattice({ size: 256, particleLength: 8 })
   l._fillWithParticles()
 }
